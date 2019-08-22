@@ -27,7 +27,8 @@ public final class ModelBoard extends Observable {
     private ArrayList<MovingObject> myMovables;
     private final int tilesize = 16;
     private final Timer time = new Timer();
-
+    private boolean passLevel = false;
+    private static ModelBoard myBoard;
     /**
      * The floor in pixels
      *
@@ -40,21 +41,25 @@ public final class ModelBoard extends Observable {
         player = new Player(tilesize * 2, tilesize * 13);
         myNonMovables = new ArrayList<>();
         myMovables = new ArrayList<>();
-        restart();
+        myNonMovables.addAll(WorldBuilder.getInstance().getNonMovables());
+        myMovables.addAll(WorldBuilder.getInstance().getMovables());
 
+    }
+    public static ModelBoard getInstance() throws FileNotFoundException {
+        if (myBoard == null) {
+            myBoard = new ModelBoard();
+        }
+        return myBoard;
     }
 
     public boolean play() throws FileNotFoundException {
         boolean results = true;
         if (player.isDead() == true) {
             pixelPosition = 0;
-           
 
-                    restart();
+            restart();
 
-                    player.restart();
-                
-           
+            player.restart();
 
         }
         player.moveDown();
@@ -90,7 +95,9 @@ public final class ModelBoard extends Observable {
 
         }
         if (player.getX() > 734) {
-            results = false;
+            WorldBuilder.getInstance().getLevelNum();
+            passLevel = true;
+            WorldBuilder.getInstance().BuildWorld();
         }
         if (player.getX() < 0) {
             player.setX(1);
@@ -102,6 +109,14 @@ public final class ModelBoard extends Observable {
         setChanged();
         notifyObservers();
         return results;
+    }
+
+    public boolean getPassLevel() {
+        return passLevel;
+    }
+
+    public void setPassLevel(boolean ispass) {
+        passLevel = ispass;
     }
 
     public int getPosition() {
@@ -130,10 +145,13 @@ public final class ModelBoard extends Observable {
     }
 
     private void restart() {
+
+        for (int i = 0; i < myMovables.size(); i++) {
+            myMovables.get(i).reset();
+        }
         pixelPosition = 0;
         myNonMovables.clear();
         myMovables.clear();
-        
         try {
             WorldBuilder.getInstance().BuildWorld();
         } catch (FileNotFoundException ex) {
